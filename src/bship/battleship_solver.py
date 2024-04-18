@@ -9,7 +9,7 @@ from PyQt6.QtWidgets import (QApplication, QMainWindow, QPushButton, QTabWidget,
                              QToolBar, QColumnView, QProgressBar, QComboBox, QListWidget, QListView, QAbstractItemView,
                              QDialog)
 
-from src.bship.battleship_model import BShipModel
+from battleship_model import BShipModel
 
 model = BShipModel()
 HEIGHT_DEFAULT = 5
