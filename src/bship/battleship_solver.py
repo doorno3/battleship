@@ -10,6 +10,7 @@ from PyQt6.QtWidgets import (QApplication, QMainWindow, QPushButton, QTabWidget,
                              QDialog)
 
 from battleship_model import BShipModel
+from src.bship.bship_game import BShipGame
 
 model = BShipModel()
 HEIGHT_DEFAULT = 5
@@ -314,7 +315,10 @@ class InteractiveTab(BShipTab):
         par = DynamicParLabel()
         self.game_buttons.setFixedHeight(40)
 
-        for w in [score, par]:
+        checkie = QPushButton("Show Heatmap")
+        checkie.pressed.connect(self.gamebox.show_heat)
+
+        for w in [score, par, checkie]:
             w.setMinimumWidth(80)
             self.game_buttons.layout().addWidget(w)
 
@@ -331,17 +335,18 @@ class GameBoxButton(QPushButton):
 
 
     def __init__(self, enabled, text, x, y):
-        super().__init__(text)
+        super().__init__()
         self.set_enabled(enabled)
         self.setMinimumSize(10, 10)
         self.setMaximumSize(1000, 1000)
-
+        self.is_guessed = False
         self.scalar = xy_to_coord((x, y))
         self.pressed.connect(self.on_press)
         self.press_trigger.connect(model.on_game_button_pressed)
 
     def on_press(self):
         self.press_trigger.emit(self.scalar)
+        self.is_guessed = True
 
     def enable(self):
         self.setEnabled(True)
@@ -354,6 +359,7 @@ class GameBoxButton(QPushButton):
     def set_enabled(self, enabled):
         if enabled:
             self.enable()
+            self.is_guessed = False
         else:
             self.disable()
 
@@ -399,6 +405,31 @@ class GameBox(QWidget):
         model.experiment_rerender_signal.connect(self.on_game_started)
         self.on_game_terminated()
 
+    def show_heat(self):
+        if not model.bg:
+            return
+        #assert isinstance(model.bg, BShipGame)
+        for w in self.display_boxes:
+            for b in w:
+                assert isinstance(b, GameBoxButton)
+                if b.is_guessed:
+                    continue
+                coord = b.scalar
+                prob_belief = model.bg.prob_beliefs[coord]
+                redness = int((prob_belief / 100) * 255)
+                print("Set redness of",coord,"to",redness)
+                b.setStyleSheet(f"background-color : rgb({redness},100,100)")
+
+    def hide_heat(self):
+        for w in self.display_boxes:
+            for b in w:
+                assert isinstance(b, GameBoxButton)
+                if b.is_guessed:
+                    continue
+                else:
+                    b.setStyleSheet("background-color : "+b.blank_color)
+
+
     def populate(self):
         """
         Populate gamebox with dynamic GameBoxButtons and repaint etc.
@@ -423,12 +454,14 @@ class GameBox(QWidget):
     def on_hit_received(self, scalar_coord):
         if not self.isVisible():
             return
+        self.hide_heat()
         y,x = coord_to_xy(scalar_coord)
         self.box_at(x, y).set_hit()
 
     def on_miss_received(self, scalar_coord):
         if not self.isVisible():
             return
+        self.hide_heat()
         y,x = coord_to_xy(scalar_coord)
         self.box_at(x, y).set_miss()
 
@@ -452,6 +485,7 @@ class GameBox(QWidget):
         for y in self.display_boxes:
             for x in y:
                 x.set_enabled(enabled)
+
 
 class ExperimentProgressBar(QProgressBar):
 
