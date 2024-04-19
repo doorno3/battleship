@@ -8,6 +8,11 @@ This project is an extension (and simplification) of work concerning the use of 
 This project is a comparative strategy evaluator for the basic game with customisable boards.
 The user selects a strategy and designs their board parameters, and then runs an experiment which automatically applies the strategy to every possible instantiation of the board, and presents statistics. 
 Any number of ships of different sizes can be added and the board may be any dimension.
+
+![Experiments being performed](https://github.com/gunass/battleship/blob/main/imgs/exp.png)
+
+![Experiment results](https://github.com/gunass/battleship/blob/main/imgs/exp_results.png)
+
 Optionally, the user can also simply play the game themselves, for fun. 
 
 Run the code using `python3 battleship_solver.py`. 
