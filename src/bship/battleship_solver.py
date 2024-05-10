@@ -10,7 +10,7 @@ from PyQt6.QtWidgets import (QApplication, QMainWindow, QPushButton, QTabWidget,
                              QDialog)
 
 from battleship_model import BShipModel
-from src.bship.bship_game import BShipGame
+from bship_game import BShipGame
 
 model = BShipModel()
 HEIGHT_DEFAULT = 5
@@ -51,12 +51,13 @@ class MainWindow(QMainWindow):
         exit_button.pressed.connect(diag.close)
         diag.exec()
 
-    def on_exp_complete(self, avgscore):
+    def on_exp_complete(self, avgscore, maxscore):
         diag = QDialog()
         diag.setLayout(QVBoxLayout())
         diag.layout().addWidget(QLabel("Experiment complete!"))
         diag.layout().addWidget(QLabel("Number of tests = "+f'{model.boards_n:d}'))
         diag.layout().addWidget(QLabel("Average score = "+f'{avgscore:.2f}'))
+        diag.layout().addWidget(QLabel("Maximum score = "+f'{maxscore:.2f}'))
 
         total_time = model.exp_complete_time - model.exp_start_time
         per_exp_time = total_time / model.boards_n

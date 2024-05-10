@@ -15,6 +15,10 @@ class BoardFactory:
         self.populate_boards_containing()
 
     def get_random_board(self):
+        """
+
+        :return:
+        """
         random_index = randint(0, len(self.default_boards))
         return self.default_boards[random_index]
 

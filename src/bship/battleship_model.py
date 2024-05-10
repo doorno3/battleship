@@ -83,7 +83,7 @@ class ExperimentThread(threading.Thread):
         if self._stop_event.is_set():
             self.exp_aborted_signal.emit()
         else:
-            self.exp_complete_signal.emit(avgscore)
+            self.exp_complete_signal.emit(avgscore, max(scores))
 
 
 class BShipModel(QObject):
@@ -96,7 +96,7 @@ class BShipModel(QObject):
 
     experiment_started_signal = pyqtSignal(int)
     experiment_rerender_signal = pyqtSignal()
-    experiment_complete_signal = pyqtSignal(float)
+    experiment_complete_signal = pyqtSignal(float, int)
     experiment_failed_signal = pyqtSignal()
     experiment_aborted_signal = pyqtSignal()
     experiment_score_signal = pyqtSignal(int)
