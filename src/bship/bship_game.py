@@ -62,7 +62,7 @@ class BShipGame:
 
     def filter_beliefs_by_guess(self, coord: int, success):
 
-        # RandFast strategy does not need to filter beliefs
+        # RandFast strategy does not need to filter beliefs at all (note Rand does here but not probabilistically)
         if self.strategy == 3:
             return
 
@@ -101,9 +101,11 @@ class BShipGame:
         """
         fill probabilistic beliefs with guess probabilities
         """
+        using_prob_beliefs = self.strategy not in [2, 3]
 
-        # Check cached beliefs
-        if self.guesses in self.bf.miss_cache.keys():
+        # Check cached beliefs if we are using a belief-based strategy
+        # Cache doesn't make sense for randomised strategies
+        if using_prob_beliefs and self.guesses in self.bf.miss_cache.keys():
             self.prob_beliefs = self.bf.miss_cache[self.guesses]
             return
 
@@ -112,7 +114,7 @@ class BShipGame:
             self.prob_beliefs[g] = self.guess_chance(g)
 
         # Cache belief if applicable
-        if self.achieved_hits == 0 and self.guesses not in self.bf.miss_cache.keys():
+        if using_prob_beliefs and self.achieved_hits == 0 and self.guesses not in self.bf.miss_cache.keys():
             self.bf.add_to_miss_cache(self.prob_beliefs, self.guesses)
 
     def get_best_guess(self) -> int:
@@ -124,7 +126,7 @@ class BShipGame:
         best_g = -1
 
         if self.strategy == 0:
-            # Default strategy: hit% closest to 50 "PMed"
+            # Default strategy: hit percentage closest to 50 "PMed"
             best_q = 50
             for g, p in self.prob_beliefs.items():
                 quality = abs(p - 50)
@@ -133,7 +135,7 @@ class BShipGame:
                     best_g = g
 
         elif self.strategy == 1:
-            # Comparison strategy: hit% highest "PMax"
+            # Comparison strategy: hit percentage highest, but under 100, "PMax"
             best_q = -1
             for g, p in self.prob_beliefs.items():
                 quality = p
@@ -142,8 +144,7 @@ class BShipGame:
                     best_g = g
 
         elif self.strategy == 4:
-            # Comparison strategy: hit% lowest "PMin"
-            best_g = 100
+            # Comparison strategy: hit percentage being lowest, but over 0, "PMin"
             best_q = 100
             for g, p in self.prob_beliefs.items():
                 quality = p
@@ -152,17 +153,17 @@ class BShipGame:
                     best_g = g
 
         elif self.strategy == 2:
-            # Guess a random square not yet guessed "Rand/RandFast"
-            squares = [g for g, p in self.prob_beliefs.items()
+            # Guess a random square not yet guessed "Rand"
+            # We still need to track probabilistic beliefs to detect a win
+            squares = [g for g in self.prob_beliefs.keys()
                        if g not in self.trace.keys()]
             return squares[randint(0, len(squares) - 1)]
 
         elif self.strategy == 3:
-            squares = [g for g, p in self.prob_beliefs.items()
-                       if g not in self.trace.keys()]
-            if len(squares) == 0:
-                return 0
-            return squares[randint(0, len(squares) - 1)]
+            # Guess a totally random square regardless of history "RandFast"
+            # this strategy never modifies prob_beliefs hence "Fast"
+            # it therefore requires fully sinking all ships
+            return randint(0, (self.w * self.h)-1)
 
         return best_g
 
