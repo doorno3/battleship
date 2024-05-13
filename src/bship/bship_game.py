@@ -105,8 +105,8 @@ class BShipGame:
 
         # Check cached beliefs if we are using a belief-based strategy
         # Cache doesn't make sense for randomised strategies
-        if using_prob_beliefs and self.guesses in self.bf.miss_cache.keys():
-            self.prob_beliefs = self.bf.miss_cache[self.guesses]
+        if using_prob_beliefs and self.achieved_hits == 0 and self.guesses in self.bf.miss_cache.keys():
+            self.prob_beliefs = self.bf.miss_cache[self.guesses].copy()
             return
 
         # Do the very expensive computation otherwise
