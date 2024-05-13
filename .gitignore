@@ -3,4 +3,4 @@
 bship.iml
 imgs/.DS_Store
 src/.DS_Store
-src/bship/pycache
+src/bship/__pycache__
