@@ -157,6 +157,9 @@ class BoardFactory:
             for b in boards:
                 boards_new += self.get_all_resulting_boards(s,b)
             boards = boards_new
+
+        #TODO we need to remove duplicates from this list... or do we?
+
         return boards
 
 

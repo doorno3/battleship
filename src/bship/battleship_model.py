@@ -83,7 +83,6 @@ class ExperimentThread(threading.Thread):
                         self.miss_signal.emit(g)
 
             scores.append(exp_score)
-            print("Score =",exp_score)
 
             if not (self._stop_showing_event.is_set()):
                 self.exp_rerender_signal.emit()
