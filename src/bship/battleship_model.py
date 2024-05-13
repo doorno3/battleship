@@ -118,7 +118,7 @@ class BShipModel(QObject):
         self.current_tab = 0
 
         self.strategies = QStringListModel()
-        self.strategies_list = ["PMax", "PMed", "Rand", "RandFast"]
+        self.strategies_list = ["PMax", "PMed", "PMin", "Rand", "RandFast"]
         self.strategies.setStringList(self.strategies_list)
         self.strategy = "PMax"
 
@@ -203,6 +203,8 @@ class BShipModel(QObject):
             return 2
         elif text_strat == "RandFast":
             return 3
+        elif text_strat == "PMin":
+            return 4
 
     def on_go_pressed(self):
 

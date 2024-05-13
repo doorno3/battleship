@@ -24,10 +24,11 @@ Strategies
 Four strategies are implemented currently:
 - `PMax`: solver guesses the square with the highest probability of containing a ship;
 - `PMed`: solver guesses the square with the highest entropy (closest to 50);
+- `PMin`: solver guesses the square with the lowest probability;
 - `Rand`: solver guesses a random square with some probability of containing a ship;
 - `RandFast`: solver guesses any random square that has not yet been guessed.
 
-The first three strategies rely on the notion of a *belief*, which is a structure related to POMDPs that generalises inference about hidden information. 
+The first four strategies rely on the notion of a *belief*, which is a structure related to POMDPs that generalises inference about hidden information. 
 To compute beliefs, all possible boards are generated, and their relative probabilities are modified based on new feedback from the system as it arises through user interaction. 
 A major result of the supporting work is that when the interactive system under test behaves deterministically, this inference can always be modelled as a set of possible remaining boards, *without losing information about the relative probabilities* of each board position.
 As a consequence of this result, automated solving can be highly efficient, as the program shows. 

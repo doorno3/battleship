@@ -115,6 +115,17 @@ class BShipGame:
                     best_g = g
             return best_g
 
+        elif self.strategy == 4:
+            # Comparison strategy: hit% lowest "PMin"
+            best_g = 100
+            best_q = 100
+            for g, p in self.prob_beliefs.items():
+                quality = p
+                if best_q > quality > 0:
+                    best_q = quality
+                    best_g = g
+            return best_g
+
         elif self.strategy == 2:
             # Guess a random square not yet guessed "Rand/RandFast"
             squares = [g for g, p in self.prob_beliefs.items()
