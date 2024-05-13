@@ -2,22 +2,30 @@
 import math
 from random import randint
 
-class BoardFactory:
 
-    def __init__(self, w: int, h: int, shipdescr: tuple):
+class BoardFactory:
+    def __init__(self, w: int, h: int, ship_descr: tuple):
 
         self.w = w
         self.h = h
-        self.shipdescr = shipdescr
+        self.shipdescr = ship_descr
         self.default_boards = self.get_all_boards_from_shipdescr(self.shipdescr)
         self.boards_containing = {}
+        self.miss_cache = {}
 
         self.populate_boards_containing()
 
+    def add_to_miss_cache(self, beliefs: dict, at_index: int):
+        """
+        When a series of misses is recorded by the game object, we can save and record its beliefs
+        Since a string of misses is very likely (and also very expensive to compute beliefs for)
+            this is a very big performance improvement.
+        """
+        self.miss_cache[at_index] = beliefs.copy()
+
     def get_random_board(self):
         """
-
-        :return:
+        Draws a random board from the generated boards
         """
         random_index = randint(0, len(self.default_boards))
         return self.default_boards[random_index]
@@ -30,14 +38,11 @@ class BoardFactory:
                 if i in self.default_boards[j]:
                     self.boards_containing[i] |= {j}
 
-
-    def show_board(self, npboard):
+    def show_board(self, np_board):
         """
         Print a board (for debugging)
         """
-
-        board = list(npboard)
-
+        board = list(np_board)
         i = 0
         while i < self.w:
             print("_"+str(i)+"_", end="")
@@ -110,7 +115,6 @@ class BoardFactory:
 
         return True
 
-
     def find_all_fits(self, ship: int, board_list: list) -> list:
         """
         Given a board and a ship, return all positions where it is
@@ -123,7 +127,6 @@ class BoardFactory:
                     fits.append((r, d))
         return fits
 
-
     def board_repr(self, root: int, ship: int, direction: int) -> list:
         """
         Given a root, length, dir, return a dense Pylist of coordinate positions
@@ -132,7 +135,6 @@ class BoardFactory:
             return [root + i for i in range(0,ship)]
         if direction == 1:
             return [root + (i * self.w) for i in range(0, ship)]
-
 
     def get_all_resulting_boards(self, ship: int, board: list) -> list:
         """
@@ -145,12 +147,12 @@ class BoardFactory:
             boards += [board + bship]
         return boards
 
-    def get_all_boards_from_shipdescr(self, shipdescr: tuple) -> list:
+    def get_all_boards_from_shipdescr(self, ship_descr: tuple) -> list:
         """
         Given a tuple of ships, returns a Pylist of all possible boards that fit the ships.
         """
         boards = [[]]
-        for s in shipdescr:
+        for s in ship_descr:
             boards_new = []
             for b in boards:
                 boards_new += self.get_all_resulting_boards(s,b)

@@ -14,6 +14,7 @@ SHIPS_DEFAULT = ["3","4", "5"]
 
 UI_UPDATE_STAGGER = 10
 
+
 class ExperimentThread(threading.Thread):
 
     def __init__(self, bf, strat,
@@ -33,25 +34,42 @@ class ExperimentThread(threading.Thread):
         self.exp_update_progress_signal = experiment_update_signal
 
     def stop(self):
+        """
+        End the experiment early (i.e. user clicks reset)
+        """
         self._stop_event.set()
 
     def start_showing(self):
+        """
+        Tells the thread to start emitting Qt signals for each hit/miss (performance impact)
+        """
         self._stop_showing_event.clear()
 
     def stop_showing(self):
+        """
+        Tells the thread to stop emitting Qt signals for each hit/miss
+        """
         self._stop_showing_event.set()
+        # We should rerender the board at this point
         self.exp_rerender_signal.emit()
 
     def run(self):
         self.run_exp()
 
     def run_exp(self):
+        """
+        Runs the experiment with the given parameters
+        """
         scores = []
         i = 0
+        # Creates a game for each board and run the default strategy
         for board in self.bf.default_boards:
+            # Note we use the same BoardFactory for every game because caching boost
             bg = BShipGame(board, self.bf, self.strat)
             exp_score = 0
             i += 1
+            # Conditions, either using random strategy and all-sunk win conditions,
+            # or using belief-based strategy and IL win conditions.
             while (self.strat == 3 and not bg.detect_hit_win()) or (self.strat != 3 and not bg.detect_il_win()):
                 g = bg.get_best_guess()
                 exp_score += 1
@@ -229,17 +247,17 @@ class BShipModel(QObject):
 
             if self.current_tab == 1:
                 self.widgets["ExperimentsGamebox"].on_game_started()
-                self.bf = BoardFactory(self.width, self.height, tuple(int(i) for i in self.ships.stringList()))
+                bf = BoardFactory(self.width, self.height, tuple(int(i) for i in self.ships.stringList()))
                 strat = self.translate_strategy(self.strategy)
 
-                self.exp = ExperimentThread(self.bf, strat, self.hit_signal, self.miss_signal,
+                self.exp = ExperimentThread(bf, strat, self.hit_signal, self.miss_signal,
                                             self.experiment_complete_signal, self.experiment_aborted_signal,
                                             self.experiment_rerender_signal, self.experiment_update_signal)
 
                 if not self.show_board:
                     self.exp.stop_showing()
                 self.exp.start()
-                self.boards_n = len(self.bf.default_boards)
+                self.boards_n = len(bf.default_boards)
                 self.experiment_started_signal.emit(self.boards_n)
                 self.exp_start_time = perf_counter()
                 if not self.show_board:

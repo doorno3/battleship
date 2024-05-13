@@ -304,7 +304,7 @@ class InteractiveTab(BShipTab):
     def populate_gameplay_box(self):
         gl = self.gameplay_layout
 
-        self.gamebox = GameBox()
+        self.gamebox = GameBox(0)
         gl.addWidget(self.gamebox)
         self.gamebox.populate()
         model.widgets["InteractiveGamebox"] = self.gamebox
@@ -389,12 +389,12 @@ def coord_to_xy(coord: int):
 
 class GameBox(QWidget):
 
-    def __init__(self):
+    def __init__(self, tabnum):
         super().__init__()
 
         self.display_boxes = []
         self.playing = False
-
+        self.tabnum = tabnum
         self.setLayout(QGridLayout())
         self.layout().setContentsMargins(0,0,0,0)
         self.layout().setSpacing(0)
@@ -455,14 +455,16 @@ class GameBox(QWidget):
     def on_hit_received(self, scalar_coord):
         if not self.isVisible():
             return
-        self.hide_heat()
+        if self.tabnum == 0:
+            self.hide_heat()
         y,x = coord_to_xy(scalar_coord)
         self.box_at(x, y).set_hit()
 
     def on_miss_received(self, scalar_coord):
         if not self.isVisible():
             return
-        self.hide_heat()
+        if self.tabnum == 0:
+            self.hide_heat()
         y,x = coord_to_xy(scalar_coord)
         self.box_at(x, y).set_miss()
 
@@ -527,7 +529,7 @@ class ExperimentTab(BShipTab):
         super().__init__()
 
     def generate_gamebox(self):
-        self.gamebox = GameBox()
+        self.gamebox = GameBox(1)
         self.gamebox.populate()
         self.gamebox.setContentsMargins(0,0,0,0)
         model.widgets["ExperimentsGamebox"] = self.gamebox

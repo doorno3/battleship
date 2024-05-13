@@ -30,7 +30,12 @@ class BShipGame:
         # strategy (see get_best_guess())
         self.strategy = strategy
 
+        # optimisation to cache initial guesses
+        self.achieved_hits = 0
+        self.guesses = 0
+
         self.update_prob_beliefs()
+
 
     def test_hit(self, coord: int):
         """
@@ -44,6 +49,11 @@ class BShipGame:
         """
         success = self.test_hit(coord)
         self.trace[coord] = success
+
+        # Record hits for caching purposes etc.
+        if success:
+            self.achieved_hits += 1
+        self.guesses += 1
         self.filter_beliefs_by_guess(coord, success)
         return success
 
@@ -52,13 +62,16 @@ class BShipGame:
 
     def filter_beliefs_by_guess(self, coord: int, success):
 
+        # RandFast strategy does not need to filter beliefs
         if self.strategy == 3:
             return
 
+        # Compute superposition of believed states and new observations
         if success:
             self.beliefs = self.beliefs & self.bf.boards_containing[coord]
         else:
             self.beliefs = self.beliefs - self.bf.boards_containing[coord]
+
         self.update_prob_beliefs()
 
     def guess_data(self, coord: int) -> tuple:
@@ -69,6 +82,9 @@ class BShipGame:
         if self.strategy == 3:
             n_hits = n - 1
         else:
+            # This line of code consumes about 95% of the operational
+            # complexity of the program in experiments mode, without caching.
+            # Luckily, there is a cache.
             n_hits = len(self.bf.boards_containing[coord] & self.beliefs)
         n_misses = n - n_hits
         return n, n_hits, n_misses
@@ -85,35 +101,45 @@ class BShipGame:
         """
         fill probabilistic beliefs with guess probabilities
         """
+
+        # Check cached beliefs
+        if self.guesses in self.bf.miss_cache.keys():
+            self.prob_beliefs = self.bf.miss_cache[self.guesses]
+            return
+
+        # Do the very expensive computation otherwise
         for g in [c for c in range(self.w * self.h)]:
             self.prob_beliefs[g] = self.guess_chance(g)
+
+        # Cache belief if applicable
+        if self.achieved_hits == 0 and self.guesses not in self.bf.miss_cache.keys():
+            self.bf.add_to_miss_cache(self.prob_beliefs, self.guesses)
 
     def get_best_guess(self) -> int:
         """
         Strategy function which returns a guess
         By default (via constructor) returns coord with closest hit% to 50
         """
+
+        best_g = -1
+
         if self.strategy == 0:
             # Default strategy: hit% closest to 50 "PMed"
-            best_g = -1
             best_q = 50
             for g, p in self.prob_beliefs.items():
                 quality = abs(p - 50)
                 if quality < best_q:
                     best_q = quality
                     best_g = g
-            return best_g
 
         elif self.strategy == 1:
             # Comparison strategy: hit% highest "PMax"
-            best_g = -1
             best_q = -1
             for g, p in self.prob_beliefs.items():
                 quality = p
                 if best_q < quality < 100:
                     best_q = quality
                     best_g = g
-            return best_g
 
         elif self.strategy == 4:
             # Comparison strategy: hit% lowest "PMin"
@@ -124,7 +150,6 @@ class BShipGame:
                 if best_q > quality > 0:
                     best_q = quality
                     best_g = g
-            return best_g
 
         elif self.strategy == 2:
             # Guess a random square not yet guessed "Rand/RandFast"
@@ -139,9 +164,7 @@ class BShipGame:
                 return 0
             return squares[randint(0, len(squares) - 1)]
 
-        else:
-            print("Incompatible strategy, error...")
-            return -1
+        return best_g
 
     def detect_il_win(self) -> bool:
         """
@@ -164,14 +187,12 @@ class BShipGame:
         """
         Loops making guesses and adjusting beliefs until win condition
         """
-        guesses = 0
         while not (self.detect_il_win() or self.detect_hit_win()):
             # for ultrafine debugging:
             #self.show_board_beliefs()
 
             self.real_hit(self.get_best_guess())
-            guesses += 1
-        return guesses
+        return self.guesses
 
     def show_board_beliefs(self) -> None:
         """
